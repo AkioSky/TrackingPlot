@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1 class="title">Sign In</h1>
+    <div class="tile is-ancestor">
+        <div class="tile is-vertical is-4-desktop-only is-4">
+            <form action="" method="post" novalidate>
+                {{ form.hidden_tag() }}
+                <div class="field">
+                    {{ form.username.label(class_='label') }}
+                    <div class="control">
+                    {{ form.username(size=32, class_='input') }}
+                    </div>
+                    {% for error in form.username.errors %}
+                    <span class="help is-danger">{{ error }}</span>
+                    {% endfor %}
+                </div>
+                <div class="field">
+                    {{ form.password.label(class_='label') }}
+                    <div>
+                    {{ form.password(size=32, class_='input') }}
+                    </div>
+                    {% for error in form.password.errors %}
+                    <span class="help is-danger">{{ error }}</span>
+                    {% endfor %}
+                </div>
+                <div class="field">
+                    <div class="control">
+                    {{ form.remember_me() }} {{ form.remember_me.label(class_='checkbox') }}
+                    </div>
+                </div>
+                <div class="field">
+                    <div class="control">
+                        {{ form.submit(class_='button is-link') }}
+                    </div>
+                </div>
+            </form>
+            <div class="field">New User? <a href="{{ url_for('register') }}">Click to Register!</a> </div>
+        </div>
+    </div>
+{% endblock %}
