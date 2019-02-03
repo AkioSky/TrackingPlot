@@ -1,0 +1,86 @@
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>reason</th>
+      <th>blocked_count</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>navigator.language</td>
+      <td>2216</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>ISP = Amazon.com, Inc.</td>
+      <td>1040</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>ISP = Microsoft Corporation</td>
+      <td>630</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>navigator.webdriver</td>
+      <td>385</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>ISP = Google LLC</td>
+      <td>225</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>ISP = Hurricane Electric LLC</td>
+      <td>85</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>Useragent = Googlebot</td>
+      <td>29</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>Fonts</td>
+      <td>20</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>Useragent = Baidu Spider</td>
+      <td>19</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>Useragent = Yandex Bot</td>
+      <td>11</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>Useragent = Facebook External Hit</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <th>11</th>
+      <td>Useragent = BingBot</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <th>12</th>
+      <td>Useragent = Generic Bot</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <th>13</th>
+      <td>Useragent = Yahoo! Slurp</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <th>14</th>
+      <td>Useragent = WebPageTest</td>
+      <td>1</td>
+    </tr>
+  </tbody>
+</table>
