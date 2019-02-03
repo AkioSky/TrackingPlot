@@ -8,3 +8,4 @@ pymysql
 matplotlib
 pandas
 plotly
+gunicorn
