@@ -1,13 +1,47 @@
 {% extends 'base.html' %}
 
+{% block styling %}
+    <link href="{{ url_for('static', filename='bulma/css/bulma.css')}}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='jquery-ui/jquery-ui.css') }}" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/css/bootstrap-datetimepicker.min.css" rel="stylesheet">
+{% endblock %}
+
 {% block content %}
     <h1>Welcome, {{ current_user.username }}</h1>
+    <form action="" method="get" class="columns">
+        <div class="column">
+            {{ form.start_date.label(class_='label') }}
+            <div class="control">
+            {{ form.start_date(class_='input', readonly=true) }}
+            </div>
+            {% for error in form.start_date.errors %}
+            <span class="help is-danger">{{ error }}</span>
+            {% endfor %}
+        </div>
+        <div class="column">
+            {{ form.end_date.label(class_='label') }}
+            <div class="control">
+            {{ form.end_date(class_='input', readonly=true) }}
+            </div>
+            {% for error in form.end_date.errors %}
+            <span class="help is-danger">{{ error }}</span>
+            {% endfor %}
+        </div>
+        <div class="column">
+            <label class="label">&nbsp;</label>
+            <div class="control">
+                {{ form.submit(class_='button is-link') }}
+            </div>
+        </div>
+    </form>
     <div class="chart" id="bargraph"></div>
     <div class="table">
+        <a href="{{ url_for('download_blocked') }}" target="_blank"><button class="button is-light">Download</button></a>
         {{ graphs[2] | safe }}
     </div>
     <div class="chart" id="areagraph"></div>
     <div class="table">
+        <a href="{{ url_for('download_visit') }}" target="_blank"><button class="button is-light">Download</button></a>
         {{ graphs[3] | safe }}
     </div>
 {% endblock %}
@@ -15,12 +49,55 @@
 {% block script %}
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/js/bootstrap-datetimepicker.min.js"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='jquery-ui/jquery-ui.js') }}" rel="stylesheet"></script>
 
 <script>
     var graph1 = {{ graphs[0] | safe}};
     Plotly.plot('bargraph', graph1, {autosize: true, title: 'Blocked Reasons', orientation: 'h', yaxis: {automargin: true}});
     var graph2 = {{ graphs[1] | safe}};
     Plotly.newPlot('areagraph', graph2, {title: 'Visitors Blocked Ads'});
+
+    $(function() {
+        var dateFormat = "mm/dd/yy",
+            from = $( "#start_date" )
+                .datepicker({
+                    defaultDate: "+1w",
+                    changeMonth: true,
+                    numberOfMonths: 3
+                })
+                .on( "change", function() {
+                    to.datepicker( "option", "minDate", getDate( this ) );
+                }),
+            to = $( "#end_date" ).datepicker({
+                defaultDate: "+1w",
+                changeMonth: true,
+                numberOfMonths: 3
+            })
+                .on( "change", function() {
+                    from.datepicker( "option", "maxDate", getDate( this ) );
+                });
+
+        var start_date = "{{start_date}}";
+        var end_date = "{{end_date}}";
+        if (start_date.length > 4) {
+            from.datepicker('setDate', new Date("{{start_date}}"));
+        }
+        if (end_date.length > 4) {
+            to.datepicker('setDate', new Date("{{end_date}}"));
+        }
+
+        function getDate( element ) {
+            var date;
+            try {
+                date = $.datepicker.parseDate( dateFormat, element.value );
+            } catch( error ) {
+                date = null;
+            }
+            return date;
+        }
+    });
 
 </script>
 {% endblock %}

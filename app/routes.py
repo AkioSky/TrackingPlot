@@ -1,6 +1,6 @@
-from flask import render_template, flash, redirect, url_for, request
+from flask import render_template, flash, redirect, url_for, request, send_file
 from app import app, db
-from app.forms import LoginForm, RegistrationForm
+from app.forms import LoginForm, RegistrationForm, DateSelectForm
 from flask_login import current_user, login_user, logout_user, login_required
 from app.models import User
 from werkzeug.urls import url_parse
@@ -13,101 +13,15 @@ import plotly.graph_objs as go
 import io
 import base64
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from datetime import timezone
 import time
+import os
 
 track_db = pymysql.connect('trackingdbinstance-1.ch4vficxrcmw.us-east-2.rds.amazonaws.com', 'DefenseDaily', 'htK5N6a8Bry4e49H', 'tracking')
 
 
-@app.route('/plot')
-def data_query():
-    good_data_query = """SELECT DefenseDaily_TrackingData.`pixel.timestamp`, status, reason 
-    FROM DefenseDaily_TrackingAdsFilter 
-    join DefenseDaily_TrackingData ON pixel_id = DefenseDaily_TrackingData.id
-    """
-    cursor = track_db.cursor()
-    cursor.execute(good_data_query)
-    total_data_myresult = cursor.fetchall()
-
-    timestamp = []
-    status = []
-    reason = []
-
-    for num in range(0, len(total_data_myresult)):
-        timestamp.append(total_data_myresult[num][0])
-        status.append(total_data_myresult[num][1])
-        reason.append(total_data_myresult[num][2])
-
-    data_dict = {
-        'timestamp': timestamp,
-        'status': status,
-        'reason': reason}
-
-    df = pd.DataFrame(data_dict)
-
-    df['date'] = pd.to_datetime(df['timestamp'], unit='s')
-
-    df['date'] = df['date'].dt.strftime('%Y-%m-%d')
-
-    def displayed_count(x):
-        if x['status'] == 'displayed':
-            return 1
-        else:
-            return 0
-
-    def blocked_count(df):
-        if df['status'] == 'blocked':
-            return 1
-        else:
-            return 0
-
-    df['blocked_count'] = df.apply(lambda x: blocked_count(x), axis=1)
-
-    df['displayed_count'] = df.apply(lambda x: displayed_count(x), axis=1)
-
-    df_reasons = pd.pivot_table(df, index='reason', values=['blocked_count'], aggfunc=np.sum)
-    df_reasons = df_reasons.sort_values(by='blocked_count', ascending=False)
-
-    print(df_reasons)
-
-    # Reasons Chart
-    ax = df_reasons['blocked_count'].plot(kind='barh', title='Blocked Reasons')
-
-    # Pivot Chart / Graph
-    df_pivot = pd.pivot_table(df, index='date', values=['displayed_count', 'blocked_count'], aggfunc=np.sum)
-    df_pivot['total_visits'] = df_pivot['blocked_count'] + df_pivot['displayed_count']
-    df_pivot['percent_blocked_from_ads'] = df_pivot['blocked_count'] / df_pivot['total_visits']
-
-    print(df_pivot)
-
-    x = df_pivot.index
-    bars1 = df_pivot['displayed_count'].tolist()
-    bars2 = df_pivot['blocked_count'].tolist()
-
-    # Top bars
-    p1 = plt.bar(x, bars1, color='#6495ED', edgecolor='white')
-
-    # Bottom Bars
-    p2 = plt.bar(x, bars2, bottom=bars1, color='firebrick', edgecolor='white')
-
-    # Custom X axis
-    plt.title("Visitors Blocked Ads")
-    plt.xlabel("date")
-    plt.xticks(rotation=90)
-    plt.legend((p1[0], p2[0]), ('Visitors With Ads', 'Bots / Blocked Ads'), loc=4)
-
-    img = io.BytesIO()
-    plt.savefig(img, format='png')
-    img.seek(0)
-    plot_url = base64.b64encode(img.getvalue()).decode()
-
-    # Show graphic
-    plt.show()
-    return '<img src="data:image/png;base64, {}">'.format(plot_url)
-
-
-def create_plot():
+def create_plot(start_date='', end_date=''):
     good_data_query = """SELECT DefenseDaily_TrackingData.`pixel.timestamp`, status, reason 
         FROM DefenseDaily_TrackingAdsFilter 
         join DefenseDaily_TrackingData ON pixel_id = DefenseDaily_TrackingData.id
@@ -125,6 +39,8 @@ def create_plot():
         status.append(total_data_myresult[num][1])
         reason.append(total_data_myresult[num][2])
 
+    #print(len(total_data_myresult))
+
     data_dict = {
         'timestamp': timestamp,
         'status': status,
@@ -132,9 +48,20 @@ def create_plot():
 
     df = pd.DataFrame(data_dict)
 
+    if start_date:
+        start_day = datetime.strptime(start_date, '%m/%d/%Y')
+        end_day = datetime.strptime(end_date, '%m/%d/%Y')
+        end_day = end_day + timedelta(days=1)
+        start_stamp = time.mktime(start_day.date().timetuple())
+        end_stamp = time.mktime(end_day.date().timetuple())
+        df_filtered = df[(df['timestamp'] >= start_stamp) & (df['timestamp'] < end_stamp)]
+        df = df_filtered
+        #print(df_filtered)
+
     df['date'] = pd.to_datetime(df['timestamp'], unit='s')
 
     df['date'] = df['date'].dt.strftime('%Y-%m-%d')
+    #print(df)
 
     def displayed_count(x):
         if x['status'] == 'displayed':
@@ -154,6 +81,8 @@ def create_plot():
 
     df_reasons = pd.pivot_table(df, index='reason', values=['blocked_count'], aggfunc=np.sum)
     df_reasons = df_reasons.sort_values(by='blocked_count', ascending=False)
+    df_reasons.to_csv(os.path.join(app.root_path, 'temp/')+str(current_user.id)+'_first.csv')
+
     df_reasons.reset_index(level=0, inplace=True)
 
     # Reasons Chart
@@ -167,6 +96,7 @@ def create_plot():
     df_pivot = pd.pivot_table(df, index='date', values=['displayed_count', 'blocked_count'], aggfunc=np.sum)
     df_pivot['total_visits'] = df_pivot['blocked_count'] + df_pivot['displayed_count']
     df_pivot['percent_blocked_from_ads'] = df_pivot['blocked_count'] / df_pivot['total_visits']
+    df_pivot.to_csv(os.path.join(app.root_path, 'temp/') + str(current_user.id) + '_second.csv')
 
     df_pivot.reset_index(level=0, inplace=True)
     trace1 = go.Scatter(x=df_pivot['date'], y=df_pivot['displayed_count'], fill='tozeroy', name='Visitors With Ads'),
@@ -180,10 +110,11 @@ def create_plot():
 
     graphJSON = [graphJSON1, graphJson2, table1, table2]
 
-    return graphJSON
+    return graphJSON, start_date, end_date
 
-@app.route('/')
-@app.route('/index')
+
+@app.route('/', methods=['GET'])
+@app.route('/index', methods=['GET'])
 @login_required
 def index():
     #today_stamp = time.mktime(datetime.utcnow().date().timetuple())
@@ -208,8 +139,17 @@ def index():
     #    print(result)
         #print(datetime.utcfromtimestamp(int(result[1])).strftime('%Y-%m-%d %H'))
     #print(len(results))
-    graphs = create_plot()
-    return render_template('index.html', title='Home Page', graphs=graphs)
+    form = DateSelectForm()
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+    if start_date:
+        start_obj = datetime.strptime(start_date, '%m/%d/%Y')
+        end_obj = datetime.strptime(end_date, '%m/%d/%Y')
+        if start_obj >= end_obj:
+            flash('Invalid date range')
+            return redirect(url_for('index'))
+    graphs, start_date, end_date = create_plot(start_date, end_date)
+    return render_template('index.html', title='Home Page', graphs=graphs, form=form, start_date=start_date, end_date=end_date)
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -250,3 +190,16 @@ def register():
         flash('Congratulations, you are now a registered user!')
         return redirect(url_for('login'))
     return render_template('register.html', title='Register', form=form)
+
+
+@app.route('/download/blocked-reason')
+def download_blocked():
+    file_name = os.path.join(os.path.join(app.root_path, 'temp/')+str(current_user.id)+'_first.csv')
+    return send_file(file_name, attachment_filename='blocked-reason.csv', mimetype='text/csv', as_attachment=True)
+
+
+@app.route('/download/visit-block-ads')
+def download_visit():
+    file_name = os.path.join(os.path.join(app.root_path, 'temp/')+str(current_user.id)+'_second.csv')
+    return send_file(file_name, attachment_filename='visit-block-ads.csv', mimetype='text/csv', as_attachment=True)
+
