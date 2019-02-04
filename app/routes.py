@@ -99,8 +99,22 @@ def create_plot(start_date='', end_date=''):
     df_pivot.to_csv(os.path.join(app.root_path, 'temp/') + str(current_user.id) + '_second.csv')
 
     df_pivot.reset_index(level=0, inplace=True)
-    trace1 = go.Scatter(x=df_pivot['date'], y=df_pivot['displayed_count'], fill='tozeroy', name='Visitors With Ads'),
-    trace2 = go.Scatter(x=df_pivot['date'], y=df_pivot['blocked_count'], fill='tonexty', name='Bots / Blocked Ads'),
+    trace1 = go.Bar(x=df_pivot['date'], y=df_pivot['displayed_count'], name='Visitors With Ads',
+                    marker=dict(
+                        color='rgba(55, 128, 191, 0.7)',
+                        line=dict(
+                            color='rgba(55, 128, 191, 1.0)',
+                            width=2,
+                        )
+                    )),
+    trace2 = go.Bar(x=df_pivot['date'], y=df_pivot['blocked_count'], name='Bots / Blocked Ads',
+                    marker=dict(
+                        color='rgba(219, 64, 82, 0.7)',
+                        line=dict(
+                            color='rgba(219,64,82,1.0)',
+                            width=2,
+                        )
+                    )),
     graphJson2 = []
     trace1_dump = json.dumps(trace1, cls=plotly.utils.PlotlyJSONEncoder)
     trace2_dump = json.dumps(trace2, cls=plotly.utils.PlotlyJSONEncoder)

@@ -34,15 +34,15 @@
             </div>
         </div>
     </form>
-    <div class="chart" id="bargraph"></div>
-    <div class="table">
-        <a href="{{ url_for('download_blocked') }}" target="_blank"><button class="button is-light">Download</button></a>
-        {{ graphs[2] | safe }}
-    </div>
     <div class="chart" id="areagraph"></div>
     <div class="table">
-        <a href="{{ url_for('download_visit') }}" target="_blank"><button class="button is-light">Download</button></a>
+        <a href="{{ url_for('download_visit') }}" target="_blank"><button class="button is-light">Download Raw Data</button></a>
         {{ graphs[3] | safe }}
+    </div>
+    <div class="chart" id="bargraph"></div>
+    <div class="table">
+        <a href="{{ url_for('download_blocked') }}" target="_blank"><button class="button is-light">Download Raw Data</button></a>
+        {{ graphs[2] | safe }}
     </div>
 {% endblock %}
 
@@ -55,9 +55,24 @@
 
 <script>
     var graph1 = {{ graphs[0] | safe}};
-    Plotly.plot('bargraph', graph1, {autosize: true, title: 'Blocked Reasons', orientation: 'h', yaxis: {automargin: true}});
+    Plotly.plot('bargraph', graph1,
+        {
+            autosize: true,
+            title: 'Blocked Reasons',
+            orientation: 'h',
+            yaxis: {automargin: true},
+        },
+        {displaylogo: false}
+    );
     var graph2 = {{ graphs[1] | safe}};
-    Plotly.newPlot('areagraph', graph2, {title: 'Visitors Blocked Ads'});
+    Plotly.newPlot('areagraph', graph2,
+        {
+            title: 'Visitors Blocked Ads',
+            barmode: 'stack',
+            displaylogo: false
+        },
+        {displaylogo: false}
+    );
 
     $(function() {
         var dateFormat = "mm/dd/yy",
